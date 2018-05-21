@@ -13,6 +13,57 @@ PATCH_ONLY="no"
 RESTART_ZIMBRA="yes"
 
 ## patches
+read -r -d '' PATCH_Z88 <<'EOF'
+--- templates_orig/nginx.conf.web.http.default.template	2018-03-22 16:05:36.000000000 -0400
++++ templates/nginx.conf.web.http.default.template	2018-05-21 10:06:39.974274148 -0400
+@@ -66,6 +66,9 @@
+     ${web.login.upstream.disable}     proxy_redirect http://$relhost/ http://$http_host/;
+     ${web.login.upstream.disable} }
+       
++    # patched by certbot-zimbra.sh
++    location ^~ /.well-known/acme-challenge { root /opt/zimbra/data/nginx/html; }
++
+     location /
+     {
+         # Begin stray redirect hack
+--- templates_orig/nginx.conf.web.https.default.template	2018-03-22 16:05:36.000000000 -0400
++++ templates/nginx.conf.web.https.default.template	2018-05-21 10:07:59.534272546 -0400
+@@ -124,6 +124,9 @@
+     ${web.login.upstream.disable}     proxy_redirect http://$relhost/ https://$http_host/;
+     ${web.login.upstream.disable} }
+ 
++    # patched by certbot-zimbra.sh
++    location ^~ /.well-known/acme-challenge { root /opt/zimbra/data/nginx/html; }
++
+     location /
+     {
+         # Begin stray redirect hack
+--- templates_orig/nginx.conf.web.https.template	2018-03-22 16:05:36.000000000 -0400
++++ templates/nginx.conf.web.https.template	2018-05-21 10:09:39.057270541 -0400
+@@ -95,6 +95,9 @@
+     ${web.login.upstream.disable}     proxy_redirect http://$relhost/ https://$http_host/;
+     ${web.login.upstream.disable} }
+ 
++    # patched by certbot-zimbra.sh
++    location ^~ /.well-known/acme-challenge { root /opt/zimbra/data/nginx/html; }
++
+     location /
+     {
+         # Begin stray redirect hack
+--- templates_orig/nginx.conf.web.http.template	2018-03-22 16:05:36.000000000 -0400
++++ templates/nginx.conf.web.http.template	2018-05-21 10:11:21.497268478 -0400
+@@ -67,6 +67,9 @@
+     ${web.login.upstream.disable}     proxy_redirect http://$relhost/ http://$http_host/;
+     ${web.login.upstream.disable} }
+ 
++    # patched by certbot-zimbra.sh
++    location ^~ /.well-known/acme-challenge { root /opt/zimbra/data/nginx/html; }
++
+     location /
+     {
+         # Begin stray redirect hack
+EOF
+
 read -r -d '' PATCH_Z87 <<'EOF'
 diff -Naur templates_orig/nginx.conf.web.http.default.template templates/nginx.conf.web.http.default.template
 --- templates_orig/nginx.conf.web.http.default.template	2017-10-01 20:30:23.022776735 +0200
@@ -203,7 +254,9 @@ function patch_nginx() {
 	fi
 
 	# DO patch
-	if version_gt $DETECTED_ZIMBRA_VERSION 8.7; then
+	if version_gt $DETECTED_ZIMBRA_VERSION 8.8; then
+		echo "$PATCH_Z88" | $PATCH_BIN -l -p1 -d /opt/zimbra/conf/nginx/templates/
+	elif version_gt $DETECTED_ZIMBRA_VERSION 8.7; then
 		echo "$PATCH_Z87" | $PATCH_BIN -l -p1 -d /opt/zimbra/conf/nginx/templates/
 	elif version_gt $DETECTED_ZIMBRA_VERSION 8.6; then
 		echo "$PATCH_Z86" | $PATCH_BIN -l -p1 -d /opt/zimbra/conf/nginx/templates/
